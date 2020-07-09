@@ -14,6 +14,10 @@ public class CreateGrid : MonoBehaviour
 
     public TMP_InputField InputRows;
     public TMP_InputField InputColomns;
+    public Slider slider;
+
+    public GameObject Player;
+    private GameObject clonePlayer;
 
     public int rows = 5;
     public int columns = 5;
@@ -25,13 +29,7 @@ public class CreateGrid : MonoBehaviour
     private Cell[,] grid;
 
     private bool hasCarvedAndHunted = false;
-    void Start()
-    {
-        
-      
-    }
 
-    
        
     void MakeGrid()
     {
@@ -70,6 +68,7 @@ public class CreateGrid : MonoBehaviour
                 {
                     Destroy(wallObj);
                     floorObj.GetComponent<Renderer>().material.color = Color.green;
+                    floorObj.name = "StartPoint";
                 }
 
                 //create exit
@@ -77,6 +76,7 @@ public class CreateGrid : MonoBehaviour
                 {
                     Destroy(wallObj2);
                     floorObj.GetComponent<Renderer>().material.color = Color.red;
+                    floorObj.name = "EndPoint";
                 }
 
 
@@ -103,12 +103,13 @@ public class CreateGrid : MonoBehaviour
 
     public void ReMakeGrid()
     {
+
         //destroy all gameobjects from the previous grid
         foreach(Transform transform in transform)
         {
             Destroy(transform.gameObject);
         }
-
+        isMazeActive = false;
         
         //get value from input field
         int rowValue = int.Parse(InputRows.text);
@@ -130,6 +131,11 @@ public class CreateGrid : MonoBehaviour
 
             // use algorithm
             StartAlgorithme();
+
+            //reposition Camera
+            CameraPosition();
+
+            isMazeActive = true;
         }
         else
         {
@@ -464,8 +470,40 @@ public class CreateGrid : MonoBehaviour
 
     public void resetColor()
     {
+        //reset the color of the input fields
         InputRows.image.color = Color.white;
         InputColomns.image.color = Color.white;
+    }
+
+    public void CameraPosition()
+    {
+        //get camera
+        Camera cam = Camera.main;
+        //make a vector3 for postion
+        Vector3 cameraPostion = cam.transform.position;
+        //asign values to postion
+        cameraPostion.x = columns / 2;
+        cameraPostion.z = -rows / 2;
+        cameraPostion.y = (rows + 1) + slider.value;
+        //change camera values
+        cam.transform.position = cameraPostion;
+    }
+
+    public void SpawnPlayer()
+    {
+        if (isMazeActive)
+        {
+            clonePlayer = Instantiate(Player, new Vector3(0, 1, 0), Quaternion.identity);
+        }
+    }
+
+    public void RemovePlayer()
+    {
+        if (clonePlayer)
+        {
+            Destroy(clonePlayer);
+            CameraPosition();
+        }
     }
     
 }
