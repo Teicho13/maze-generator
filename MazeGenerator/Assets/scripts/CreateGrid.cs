@@ -33,7 +33,7 @@ public class CreateGrid : MonoBehaviour
        
     void MakeGrid()
     {
-        
+        //create a grid for cells
         grid = new Cell[rows + 1, columns + 1];
 
 
@@ -493,14 +493,17 @@ public class CreateGrid : MonoBehaviour
     {
         if (isMazeActive)
         {
+            //spawn in player
             clonePlayer = Instantiate(Player, new Vector3(0, 1, 0), Quaternion.identity);
         }
     }
 
     public void RemovePlayer()
     {
+        //if there is a player
         if (clonePlayer)
         {
+            //destroy player and return camera
             Destroy(clonePlayer);
             CameraPosition();
         }
