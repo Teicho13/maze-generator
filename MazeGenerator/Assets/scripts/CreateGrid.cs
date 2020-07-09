@@ -2,11 +2,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class CreateGrid : MonoBehaviour
 {
+    private bool isMazeActive = false;
+
     public GameObject wall;
     public GameObject floor;
+
+    public TMP_InputField InputRows;
+    public TMP_InputField InputColomns;
 
     public int rows = 5;
     public int columns = 5;
@@ -21,10 +28,7 @@ public class CreateGrid : MonoBehaviour
     void Start()
     {
         
-        //make grid for algorithm.
-        MakeGrid();
-        //start algorithm to make a perfect maze
-        StartAlgorithme();
+      
     }
 
     
@@ -39,7 +43,7 @@ public class CreateGrid : MonoBehaviour
         for (int i = 0; i < rows; i++)
         {
             //columns go from 0 to -(column amounts) on the Z axis
-            for (int j = 0; j <= columns; j++)
+            for (int j = 0; j < columns; j++)
             {
                 
                 grid[i, j] = new Cell();
@@ -106,17 +110,35 @@ public class CreateGrid : MonoBehaviour
         }
 
         
+        //get value from input field
+        int rowValue = int.Parse(InputRows.text);
+        int colomnValue = int.Parse(InputColomns.text);
+        //check if input is big enough
+        if(rowValue > 1 && colomnValue > 1)
+        {
+            //set input as values
+            rows = rowValue;
+            columns = colomnValue;
 
-        // create Grid
-        MakeGrid();
+            // create Grid
+            MakeGrid();
 
-        //reset parameters
-        currCol = 0;
-        currRow = 0;
-        hasCarvedAndHunted = false;
+            //reset parameters
+            currCol = 0;
+            currRow = 0;
+            hasCarvedAndHunted = false;
 
-        // use algorithm
-        StartAlgorithme();
+            // use algorithm
+            StartAlgorithme();
+        }
+        else
+        {
+            InputRows.image.color = Color.red;
+            InputColomns.image.color = Color.red;
+        }
+        
+
+        
     }
 
 
@@ -438,6 +460,12 @@ public class CreateGrid : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    public void resetColor()
+    {
+        InputRows.image.color = Color.white;
+        InputColomns.image.color = Color.white;
     }
     
 }
