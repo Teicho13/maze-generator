@@ -16,6 +16,8 @@ public class CreateGrid : MonoBehaviour
 
 
     private Cell[,] grid;
+
+    private bool hasCarvedAndHunted = false;
     void Start()
     {
         
@@ -59,6 +61,20 @@ public class CreateGrid : MonoBehaviour
                 GameObject sidewall2 = Instantiate(wall, new Vector3(j * 1 - 0.4f, 0.6f, -i * 1), Quaternion.Euler(0, 90, 0));
                 sidewall2.name = "sidewall2(" + i + "-" + j + ")";
 
+                //create entrance
+                if(i == 0 && j == 0)
+                {
+                    Destroy(wallObj);
+                    floorObj.GetComponent<Renderer>().material.color = Color.green;
+                }
+
+                //create exit
+                if (i == rows - 1 && j == rows - 1)
+                {
+                    Destroy(wallObj2);
+                    floorObj.GetComponent<Renderer>().material.color = Color.red;
+                }
+
 
                 //make a new cell 
                 grid[i, j] = new Cell();
@@ -81,51 +97,29 @@ public class CreateGrid : MonoBehaviour
         }
      }
 
-    bool VisitedAllNeighbors()
+    public void ReMakeGrid()
     {
-        // check top wall.
-        if (CheckCellRules(currRow - 1, currCol))
+        //destroy all gameobjects from the previous grid
+        foreach(Transform transform in transform)
         {
-            return true;
+            Destroy(transform.gameObject);
         }
 
-        // check bottom wall.
-        if (CheckCellRules(currRow + 1, currCol))
-        {
-            return true;
-        }
+        
 
-        // check left wall.
-        if (CheckCellRules(currRow, currCol + 1))
-        {
-            return true;
-        }
+        // create Grid
+        MakeGrid();
 
-        // check right wall.
-        if (CheckCellRules(currRow, currCol - 1))
-        {
-            return true;
-        }
+        //reset parameters
+        currCol = 0;
+        currRow = 0;
+        hasCarvedAndHunted = false;
 
-        return false;
+        // use algorithm
+        StartAlgorithme();
     }
 
 
-    
-
-    // check if cell is inside maze params and check if it is visited.
-    bool CheckCellRules(int row, int column)
-    {
-        if (row >= 0 && row < rows && column >= 0 && column < columns
-            && !grid[row, column].isVisited)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-  
 
     //Hunt and Kill Algorithm
     void StartAlgorithme()
@@ -133,6 +127,25 @@ public class CreateGrid : MonoBehaviour
         //set start position and set as visited
         grid[currRow, currCol].isVisited = true;
 
+
+        //carve walls and hunt untill every cell is visited
+
+        while (!hasCarvedAndHunted)
+        {
+            //go through the maze by destroyings cell walls until you have no neighbors left
+            carveWalls();
+
+            //search the grid for unvisited cells next to visited and break a wall between them
+            HuntAndKill();
+        }
+        
+        
+
+        
+    }
+
+    void carveWalls()
+    {
         //if not every cell is visited use the switchcase
         while (VisitedAllNeighbors())
         {
@@ -146,7 +159,7 @@ public class CreateGrid : MonoBehaviour
                 case 0:
                     Debug.Log("Check up");
                     //check if its not on the top row and check if the cell above isn't already visited
-                    if (currRow > 0 && !grid[currRow - 1, currCol].isVisited)
+                    if (CheckCellRules(currRow - 1, currCol))
                     {
                         //check for a wall to destroy
                         if (grid[currRow, currCol].topWall)
@@ -171,7 +184,7 @@ public class CreateGrid : MonoBehaviour
                 case 1:
                     Debug.Log("Check Bottom");
                     //check if its not on the bottom row and check if the cell below isn't already visited
-                    if (currRow < rows - 1 && !grid[currRow + 1, currCol].isVisited)
+                    if (CheckCellRules(currRow + 1, currCol))
                     {
                         if (grid[currRow, currCol].bottomWall)
                         {
@@ -193,7 +206,7 @@ public class CreateGrid : MonoBehaviour
                 case 2:
                     Debug.Log("Check Left");
                     //check if its not the most left column and check if the cell on the left isn't already visited
-                    if (currCol > 0 && !grid[currRow, currCol - 1].isVisited)
+                    if (CheckCellRules(currRow, currCol - 1))
                     {
                         if (grid[currRow, currCol].leftWall)
                         {
@@ -215,7 +228,7 @@ public class CreateGrid : MonoBehaviour
                 case 3:
                     Debug.Log("Check right");
                     //check if its not the most left column and check if the cell on the right isn't already visited
-                    if (currCol < columns - 1 && !grid[currRow, currCol + 1].isVisited)
+                    if (CheckCellRules(currRow, currCol + 1))
                     {
                         if (grid[currRow, currCol].rightWall)
                         {
@@ -236,15 +249,195 @@ public class CreateGrid : MonoBehaviour
 
             }
         }
-
-
-        
     }
 
-
-    
-    void Update()
+    void HuntAndKill()
     {
+        hasCarvedAndHunted = true;
+        //loop trough the grid
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < columns; j++)
+            {
+                //if there are unvisited cells
+                if (!grid[i, j].isVisited && checkAllNeighbors(i,j))
+                {
+                    hasCarvedAndHunted = false;
+                    //set current position as visited
+                    currRow = i;
+                    currCol = j;
+                    grid[currRow, currCol].isVisited = true;
+                    //destroy a wall in a random direction
+                    destroyWall();
+
+                    return;
+                }
+            }
+        }
+    }
+
+    bool VisitedAllNeighbors()
+    {
+        // check top wall.
+        if (CheckCellRules(currRow - 1, currCol))
+        {
+            return true;
+        }
+
+        // check bottom wall.
+        if (CheckCellRules(currRow + 1, currCol))
+        {
+            return true;
+        }
+
+        // check left wall.
+        if (CheckCellRules(currRow, currCol + 1))
+        {
+            return true;
+        }
+
+        // check right wall.
+        if (CheckCellRules(currRow, currCol ))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    bool CheckCellRules(int row, int column)
+    {
+        // check if cell is inside maze params and check if it is not visited.
+        if (row >= 0 && row < rows && column >= 0 && column < columns
+            && !grid[row, column].isVisited)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    void destroyWall()
+    {
+        bool destroyed = false;
+        //keep using switch until a wall is destroyed
+        while(!destroyed)
+        {
+            int ranNum = UnityEngine.Random.Range(0, 4);
+            Debug.Log(ranNum);
+
+            switch (ranNum)
+            {
+                //top
+                case 0:
+                    if (currRow > 0 && grid[currRow - 1, currCol].isVisited)
+                    {
+
+                        if (grid[currRow, currCol].topWall)
+                        {
+                            Destroy(grid[currRow, currCol].topWall);
+                        }
+
+                        if (grid[currRow - 1, currCol].bottomWall)
+                        {
+                            Destroy(grid[currRow - 1, currCol].bottomWall);
+                        }
+                        destroyed = true;
+                    }
+                        break;
+                     
+                //Bottom
+                case 1:
+
+                    //check if its not on the bottom row and check if the cell below isn't already visited
+                    if (currRow < rows - 1 && grid[currRow + 1, currCol].isVisited)
+                    {
+                        
+                        if (grid[currRow, currCol].bottomWall)
+                        {
+                            Destroy(grid[currRow, currCol].bottomWall);
+                        }
+
+                        if (grid[currRow + 1, currCol].topWall)
+                        {
+                            Destroy(grid[currRow + 1, currCol].topWall);
+                        }
+
+                        destroyed = true;
+                    }
+                    break;
+                //Left
+                case 2:
+                    
+                    //check if its not the most left column and check if the cell on the left isn't already visited
+                    if (currCol > 0 && grid[currRow, currCol - 1].isVisited)
+                    {
+                        Debug.Log("Destroyed right " + currRow + " " + (currCol - 1));
+
+                        if (grid[currRow, currCol].leftWall)
+                        {
+                            Destroy(grid[currRow, currCol].leftWall);
+                        }
+
+                        if (grid[currRow, currCol - 1].rightWall)
+                        {
+                            Destroy(grid[currRow, currCol - 1].rightWall);
+                        }
+                        
+                            destroyed = true;
+
+                    }
+                    break;
+                //Right
+                case 3:
+                    
+                    //check if its not the most left column and check if the cell on the right isn't already visited
+                    if (currCol < columns - 1 && grid[currRow, currCol + 1].isVisited)
+                    {
+                        Debug.Log("Destroyed left " + currRow + " " + (currCol + 1));
+
+                        if (grid[currRow, currCol].rightWall)
+                        {
+                            Destroy(grid[currRow, currCol].rightWall);
+                        }
+
+                        if (grid[currRow, currCol + 1].leftWall)
+                        {
+                            Destroy(grid[currRow, currCol + 1].leftWall);
+                        }
+                        destroyed = true;
+
+                    }
+                    break;
+
+            }
+        }
         
     }
+    bool checkAllNeighbors(int row, int colum)
+    {
+        //check cell above
+        if(row > 0 && grid[row -1, colum].isVisited)
+        {
+            return true;
+        }
+        //check cell below
+        if (row < rows -1 && grid[row +1, colum].isVisited)
+        {
+            return true;
+        }
+        //check cell Left
+        if (colum > 0 && grid[row, colum -1].isVisited)
+        {
+            return true;
+        }
+        //check cell right
+        if (colum < columns - 1 && grid[row, colum + 1].isVisited)
+        {
+            return true;
+        }
+        return false;
+    }
+    
 }
